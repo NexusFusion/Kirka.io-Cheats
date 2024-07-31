@@ -1,0 +1,255 @@
+// ==UserScript==
+// @name         Kirka gun fire rate increase toggleable, Speed hack, Fast Reload, AutoDodge, and AutoJump
+// @namespace    http://tampermonkey.net/
+// @version      0.7
+// @description  Click X/x to toggle fire rate, B/b to toggle AutoDodge, K/k to toggle AutoWalk, G/g to toggle AutoJump
+// @author       Cqmbo__
+// @match        https://kirka.io/
+// @match        https://kirka.io/games
+// @icon         https://yt3.ggpht.com/ofXbHpiwGc4bYnwwljjZJo53E7JRODr-SG32NPV1W6QiUnGUtVAYDwTP2NMz2pUPGnt99Juh5w=s88-c-k-c0x00ffffff-no-rj
+// @license MIT
+// @grant        none
+// @downloadURL https://update.greasyfork.org/scripts/493799/Kirka%20gun%20fire%20rate%20increase%20toggleable%2C%20Speed%20hack%2C%20Fast%20Reload%2C%20AutoDodge%2C%20and%20AutoJump.user.js
+// @updateURL https://update.greasyfork.org/scripts/493799/Kirka%20gun%20fire%20rate%20increase%20toggleable%2C%20Speed%20hack%2C%20Fast%20Reload%2C%20AutoDodge%2C%20and%20AutoJump.meta.js
+// ==/UserScript==
+
+let fireRateEnabled = true;
+let autoDodgeEnabled = true;
+let autoDodgeInterval;
+let isAutoWalking = true;
+let autoJumpEnabled = true;
+let autoJumpInterval;
+let fireRateValue = 2123;
+let autoJumpIntervalValue = 100;
+
+// Store original Date.now and performance.now functions
+const originalDateNow = Date.now;
+const originalPerformanceNow = performance.now;
+
+// Automatically enable the speed hack
+performance.now = () => originalPerformanceNow.call(performance) * 1.25;
+console.log("Speed increase enabled");
+
+function toggleFireRate() {
+    fireRateEnabled = !fireRateEnabled;
+    if (fireRateEnabled) {
+        // Increase the Date.now function rate
+        Date.now = () => originalDateNow() * (fireRateValue);
+        console.log("Gun fire rate increase enabled");
+    } else {
+        // Restore original Date.now function
+        Date.now = originalDateNow;
+        console.log("Gun fire rate increase disabled");
+    }
+    updateInfoDisplay();
+}
+
+function toggleAutoDodge() {
+    autoDodgeEnabled = !autoDodgeEnabled;
+    if (autoDodgeEnabled) {
+        autoDodgeInterval = setInterval(() => {
+            simulateKeydown('a');
+            setTimeout(() => {
+                simulateKeyup('a');
+                simulateKeydown('d');
+                setTimeout(() => {
+                    simulateKeyup('d');
+                }, 10);
+            }, 10);
+        }, 50);
+        console.log("AutoDodge enabled");
+    } else {
+        clearInterval(autoDodgeInterval);
+        console.log("AutoDodge disabled");
+    }
+    updateInfoDisplay();
+}
+
+function toggleAutoJump() {
+    autoJumpEnabled = !autoJumpEnabled;
+    if (autoJumpEnabled) {
+        autoJumpInterval = setInterval(() => {
+            simulateKeydown(' ');
+            setTimeout(() => {
+                simulateKeyup(' ');
+            }, 10);
+        }, autoJumpIntervalValue);
+        console.log("AutoJump enabled");
+    } else {
+        clearInterval(autoJumpInterval);
+        console.log("AutoJump disabled");
+    }
+    updateInfoDisplay();
+}
+
+function simulateKeydown(key) {
+    const keyMap = {
+        'a': { key: 'a', code: 'KeyA', keyCode: 65, which: 65 },
+        'd': { key: 'd', code: 'KeyD', keyCode: 68, which: 68 },
+        'w': { key: 'w', code: 'KeyW', keyCode: 87, which: 87 },
+        ' ': { key: ' ', code: 'Space', keyCode: 32, which: 32 }
+    };
+
+    const keydownEvent = new KeyboardEvent('keydown', {
+        key: keyMap[key].key,
+        code: keyMap[key].code,
+        keyCode: keyMap[key].keyCode,
+        which: keyMap[key].which,
+        shiftKey: false,
+        ctrlKey: false,
+        altKey: false,
+        metaKey: false,
+        repeat: true,
+        bubbles: true,
+        cancelable: true
+    });
+    document.dispatchEvent(keydownEvent);
+}
+
+function simulateKeyup(key) {
+    const keyMap = {
+        'a': { key: 'a', code: 'KeyA', keyCode: 65, which: 65 },
+        'd': { key: 'd', code: 'KeyD', keyCode: 68, which: 68 },
+        'w': { key: 'w', code: 'KeyW', keyCode: 87, which: 87 },
+        ' ': { key: ' ', code: 'Space', keyCode: 32, which: 32 }
+    };
+
+    const keyupEvent = new KeyboardEvent('keyup', {
+        key: keyMap[key].key,
+        code: keyMap[key].code,
+        keyCode: keyMap[key].keyCode,
+        which: keyMap[key].which,
+        shiftKey: false,
+        ctrlKey: false,
+        altKey: false,
+        metaKey: false,
+        repeat: false,
+        bubbles: true,
+        cancelable: true
+    });
+    document.dispatchEvent(keyupEvent);
+}
+
+function updateInfoDisplay() {
+    const infoDisplay = document.getElementById("infoDisplay");
+    infoDisplay.innerText = `Fire Rate: ${fireRateEnabled ? 'Enabled (x)' : 'Disabled (x)'} | AutoDodge: ${autoDodgeEnabled ? 'Enabled (b)' : 'Disabled (b)'} | AutoWalk: ${isAutoWalking ? 'Enabled (k)' : 'Disabled (k)'} | AutoJump: ${autoJumpEnabled ? 'Enabled (g)' : 'Disabled (g)'}`;
+}
+
+// Toggle functions when pressing keys
+document.addEventListener('keydown', function(event) {
+    if (event.key.toLowerCase() === 'x') {
+        toggleFireRate();
+    } else if (event.key.toLowerCase() === 'b') {
+        toggleAutoDodge();
+    } else if (event.key.toLowerCase() === 'k') {
+        toggleAutoWalk();
+    } else if (event.key.toLowerCase() === 'g') {
+        toggleAutoJump();
+    }
+    updateInfoDisplay();
+});
+
+// Create info display
+const infoDisplay = document.createElement("div");
+infoDisplay.id = "infoDisplay";
+infoDisplay.style.position = "fixed";
+infoDisplay.style.top = "10px";
+infoDisplay.style.left = "10px";
+infoDisplay.style.color = "#ffffff";
+infoDisplay.style.zIndex = "9999";
+infoDisplay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+infoDisplay.style.padding = "5px";
+infoDisplay.style.borderRadius = "5px";
+document.body.appendChild(infoDisplay);
+
+// Create sliders container
+const slidersContainer = document.createElement('div');
+slidersContainer.id = 'kirka-sliders';
+slidersContainer.style.position = 'fixed';
+slidersContainer.style.top = '350px'; // Adjust the position as needed
+slidersContainer.style.right = '10px';
+slidersContainer.style.zIndex = '10000';
+slidersContainer.style.color = 'white';
+slidersContainer.innerHTML = `
+    <h2>Kirka Settings</h2>
+    <div>
+        <label for="fireRateSlider">Fire Rate (2-3000 ms):</label>
+        <input type="range" id="fireRateSlider" min="2" max="3000" value="${fireRateValue}">
+        <output id="fireRateValue">${fireRateValue}</output>
+    </div>
+    <div>
+        <label for="autoJumpSlider">AutoJump Interval (10-1500 ms):</label>
+        <input type="range" id="autoJumpSlider" min="10" max="1500" value="${autoJumpIntervalValue}">
+        <output id="autoJumpValue">${autoJumpIntervalValue}</output>
+    </div>
+`;
+document.body.appendChild(slidersContainer);
+
+// Function to update the slider output value
+function updateSliderOutput(sliderId, outputId) {
+    const slider = document.getElementById(sliderId);
+    const output = document.getElementById(outputId);
+    output.textContent = slider.value;
+}
+
+// Add event listeners to update slider output values and apply changes
+document.getElementById('fireRateSlider').addEventListener('input', function() {
+    fireRateValue = this.value;
+    updateSliderOutput(this.id, 'fireRateValue');
+    if (fireRateEnabled) {
+        Date.now = () => originalDateNow() * (fireRateValue / 1000);
+    }
+});
+
+document.getElementById('autoJumpSlider').addEventListener('input', function() {
+    autoJumpIntervalValue = this.value;
+    updateSliderOutput(this.id, 'autoJumpValue');
+    if (autoJumpEnabled) {
+        clearInterval(autoJumpInterval);
+        autoJumpInterval = setInterval(() => {
+            simulateKeydown(' ');
+            setTimeout(() => {
+                simulateKeyup(' ');
+            }, 10);
+        }, autoJumpIntervalValue);
+    }
+});
+
+// Initial update of info display
+updateInfoDisplay();
+
+// Function to simulate pressing 'w'
+function simulateAutoWalk() {
+    simulateKeydown('w');
+}
+
+// Function to stop AutoWalk
+function stopAutoWalk() {
+    simulateKeyup('w');
+}
+
+// Function to toggle AutoWalk
+function toggleAutoWalk() {
+    isAutoWalking = !isAutoWalking;
+    if (isAutoWalking) {
+        simulateAutoWalk();
+        checkAutoWalkState();
+    } else {
+        stopAutoWalk();
+    }
+}
+
+// Function to check the state of AutoWalk button and hold 'w' key if enabled
+function checkAutoWalkState() {
+    if (isAutoWalking) {
+        simulateAutoWalk();
+        setTimeout(checkAutoWalkState, 50); // Check the state every 50 milliseconds
+    }
+}
+
+// Prevent the 'w' key from stopping AutoWalk when clicked
+document.addEventListener('keydown', function(event) {
+    if (event.key.toLowerCase() === 'w' && isAutoWalking) {
+        event.preventDefault(); // Prevent default behavior of the 'w' key
+    }
+});
